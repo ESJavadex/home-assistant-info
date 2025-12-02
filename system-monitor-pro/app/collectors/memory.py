@@ -81,6 +81,11 @@ class MemoryCollector(BaseCollector):
                 state_topic=self._make_state_topic("swap_used"),
                 value=round(swap.used / (1024**3), 2)
             ))
+            metrics.append(MetricValue(
+                sensor_id="swap_total",
+                state_topic=self._make_state_topic("swap_total"),
+                value=round(swap.total / (1024**3), 2)
+            ))
 
         return metrics
 
@@ -151,6 +156,17 @@ class MemoryCollector(BaseCollector):
                 unique_id=self._make_unique_id("swap_used"),
                 name="Swap Used",
                 state_topic=self._make_state_topic("swap_used"),
+                device_class="data_size",
+                state_class="measurement",
+                unit_of_measurement="GB",
+                icon="mdi:harddisk",
+                entity_category="diagnostic",
+                suggested_display_precision=2
+            ))
+            configs.append(SensorConfig(
+                unique_id=self._make_unique_id("swap_total"),
+                name="Swap Total",
+                state_topic=self._make_state_topic("swap_total"),
                 device_class="data_size",
                 state_class="measurement",
                 unit_of_measurement="GB",

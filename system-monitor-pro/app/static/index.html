@@ -492,6 +492,16 @@
                     <div class="stat-label">Swap (%)</div>
                 </div>
             </div>
+            <div class="stats-grid" style="margin-top: 10px;" id="swap-details">
+                <div class="stat-item">
+                    <div class="stat-value" id="swap-used">--</div>
+                    <div class="stat-label">Swap Used (GB)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="swap-total">--</div>
+                    <div class="stat-label">Swap Total (GB)</div>
+                </div>
+            </div>
         </div>
 
         <!-- Disk Card -->
@@ -617,6 +627,7 @@
                     <div class="card-icon icon-ha">&#x1F3E0;</div>
                     <span>Home Assistant</span>
                 </div>
+                <span class="status-badge status-ok" id="ha-version">--</span>
             </div>
             <div class="stats-grid">
                 <div class="stat-item">
@@ -636,12 +647,13 @@
                     <div class="stat-label">Scripts</div>
                 </div>
             </div>
-            <div class="metric-label" style="margin-top: 15px;">Running Add-ons</div>
+            <div class="metric-label" style="margin-top: 15px;">Installed Add-ons</div>
             <div class="addons-list" id="addons-list">
                 <div class="addon-item">
                     <span class="addon-name">Loading...</span>
                 </div>
             </div>
+            <div class="system-info" id="ha-info"></div>
         </div>
 
         <!-- Raspberry Pi Card (hidden by default) -->
@@ -767,9 +779,13 @@
             if (data.memory_available) document.getElementById('memory-available').textContent = data.memory_available.value;
             if (data.swap_usage) {
                 document.getElementById('swap-usage').textContent = data.swap_usage.value;
+                document.getElementById('swap-details').style.display = 'grid';
             } else {
                 document.getElementById('swap-usage').textContent = 'N/A';
+                document.getElementById('swap-details').style.display = 'none';
             }
+            if (data.swap_used) document.getElementById('swap-used').textContent = data.swap_used.value;
+            if (data.swap_total) document.getElementById('swap-total').textContent = data.swap_total.value;
 
             // Disks
             const diskContainer = document.getElementById('disk-container');
@@ -880,6 +896,17 @@
             if (data.total_connections) document.getElementById('total-connections').textContent = data.total_connections.value;
 
             // Home Assistant
+            if (data.ha_core_version) {
+                document.getElementById('ha-version').textContent = data.ha_core_version.value;
+                // Show HA system info
+                if (data.ha_core_version.attributes) {
+                    const info = data.ha_core_version.attributes;
+                    let infoHtml = '';
+                    if (info.arch) infoHtml += '<div class="info-row"><span class="info-label">Arch</span><span class="info-value">' + info.arch + '</span></div>';
+                    if (info.machine) infoHtml += '<div class="info-row"><span class="info-label">Machine</span><span class="info-value">' + info.machine + '</span></div>';
+                    document.getElementById('ha-info').innerHTML = infoHtml;
+                }
+            }
             if (data.ha_addons_running !== undefined) {
                 document.getElementById('ha-addons').textContent = data.ha_addons_running.value;
             }
