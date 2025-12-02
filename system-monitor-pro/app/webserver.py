@@ -5,20 +5,14 @@ Provides a real-time web interface for monitoring system metrics.
 Uses aiohttp for async HTTP serving compatible with the main asyncio loop.
 """
 
-import asyncio
-import json
 import logging
-import os
-from typing import TYPE_CHECKING, Optional, Dict, Any, List
+from typing import TYPE_CHECKING, Optional
 from aiohttp import web
 
 if TYPE_CHECKING:
     from collectors import CollectorRegistry
 
 logger = logging.getLogger(__name__)
-
-# Get ingress path from environment (set by Home Assistant)
-INGRESS_PATH = os.environ.get("INGRESS_PATH", "")
 
 
 class WebServer:
@@ -37,11 +31,6 @@ class WebServer:
         self.app.router.add_get("/", self._handle_index)
         self.app.router.add_get("/api/metrics", self._handle_metrics)
         self.app.router.add_get("/api/health", self._handle_health)
-        # Support ingress path prefix
-        if INGRESS_PATH:
-            self.app.router.add_get(f"{INGRESS_PATH}/", self._handle_index)
-            self.app.router.add_get(f"{INGRESS_PATH}/api/metrics", self._handle_metrics)
-            self.app.router.add_get(f"{INGRESS_PATH}/api/health", self._handle_health)
 
     async def _handle_index(self, request: web.Request) -> web.Response:
         """Serve the main dashboard HTML."""
@@ -84,10 +73,7 @@ class WebServer:
 
     def _get_dashboard_html(self) -> str:
         """Generate the dashboard HTML."""
-        # Get base path for API calls
-        base_path = INGRESS_PATH if INGRESS_PATH else ""
-
-        return f'''<!DOCTYPE html>
+        return '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -522,7 +508,12 @@ class WebServer:
     </div>
 
     <script>
-        const BASE_PATH = "{base_path}";
+        // Use relative path for ingress compatibility
+        function getBasePath() {{
+            const path = window.location.pathname;
+            // Remove trailing slash if present
+            return path.endsWith('/') ? path.slice(0, -1) : path;
+        }}
 
         function getProgressClass(value) {{
             if (value < 60) return 'progress-low';
@@ -650,10 +641,14 @@ class WebServer:
 
         async function fetchMetrics() {{
             try {{
-                const response = await fetch(BASE_PATH + '/api/metrics');
+                const basePath = getBasePath();
+                const response = await fetch(basePath + '/api/metrics');
                 if (response.ok) {{
                     const data = await response.json();
                     updateDashboard(data);
+                }} else {{
+                    console.error('API returned:', response.status);
+                    document.getElementById('last-update').textContent = 'Error: ' + response.status;
                 }}
             }} catch (error) {{
                 console.error('Failed to fetch metrics:', error);
