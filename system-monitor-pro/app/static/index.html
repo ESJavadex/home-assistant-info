@@ -897,14 +897,24 @@
                 const addons = data.ha_addons_running.attributes.addons;
                 let addonsHtml = '';
                 for (const addon of addons) {
-                    const statusClass = addon.state === 'started' ? 'status-ok' : 'status-warning';
+                    const state = addon.state || 'unknown';
+                    const isRunning = ['started', 'running'].includes(state) || state === true;
+                    const statusClass = isRunning ? 'status-ok' : (addon.installed ? 'status-warning' : 'status-danger');
+                    const displayState = isRunning ? 'running' : (addon.installed ? 'stopped' : state);
                     addonsHtml += '<div class="addon-item">' +
                         '<div><span class="addon-name">' + addon.name + '</span>' +
-                        '<div class="addon-version">v' + addon.version + '</div></div>' +
-                        '<span class="status-badge ' + statusClass + '">' + addon.state + '</span>' +
+                        '<div class="addon-version">v' + (addon.version || '?') + '</div></div>' +
+                        '<span class="status-badge ' + statusClass + '">' + displayState + '</span>' +
                         '</div>';
                 }
-                document.getElementById('addons-list').innerHTML = addonsHtml || '<div class="addon-item"><span class="addon-name">No add-ons</span></div>';
+                document.getElementById('addons-list').innerHTML = addonsHtml || '<div class="addon-item"><span class="addon-name">No add-ons installed</span></div>';
+            }
+            // Show total installed count
+            if (data.ha_addons_running && data.ha_addons_running.attributes) {
+                const total = data.ha_addons_running.attributes.total_installed || 0;
+                if (total > 0) {
+                    document.getElementById('ha-addons').textContent = total;
+                }
             }
 
             // Raspberry Pi

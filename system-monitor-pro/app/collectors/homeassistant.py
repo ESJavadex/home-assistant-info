@@ -128,23 +128,34 @@ class HomeAssistantCollector(BaseCollector):
 
         # Get add-ons info
         addons = await self._get_addons()
-        running_addons = [a for a in addons if a.get("state") == "started"]
+
+        # Log add-on states for debugging
+        if addons:
+            states = set(a.get("state", "unknown") for a in addons)
+            logger.debug(f"Found {len(addons)} add-ons with states: {states}")
+
+        # Filter running add-ons (check multiple possible state values)
+        running_addons = [a for a in addons if a.get("state") in ("started", "running", True)]
+
+        # If no running found, show all installed add-ons
+        display_addons = running_addons if running_addons else addons
 
         metrics.append(MetricValue(
             sensor_id="ha_addons_running",
             state_topic=self._make_state_topic("ha_addons_running"),
-            value=len(running_addons),
+            value=len(running_addons) if running_addons else len(addons),
             attributes={
                 "addons": [
                     {
                         "name": a.get("name", "Unknown"),
                         "slug": a.get("slug", ""),
                         "version": a.get("version", ""),
-                        "state": a.get("state", "unknown")
+                        "state": a.get("state", "unknown"),
+                        "installed": a.get("installed", False)
                     }
-                    for a in running_addons
+                    for a in display_addons if a.get("installed", False)
                 ],
-                "total_installed": len(addons)
+                "total_installed": sum(1 for a in addons if a.get("installed", False))
             },
             attributes_topic=self._make_attributes_topic("ha_addons_running")
         ))
