@@ -20,7 +20,7 @@ Custom Home Assistant add-ons for system monitoring and information.
 
 ### System Monitor Pro
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg?style=flat-square)](system-monitor-pro/)
+[![Version](https://img.shields.io/badge/version-0.0.2-blue.svg?style=flat-square)](system-monitor-pro/)
 [![amd64](https://img.shields.io/badge/amd64-yes-green.svg?style=flat-square)](system-monitor-pro/)
 [![aarch64](https://img.shields.io/badge/aarch64-yes-green.svg?style=flat-square)](system-monitor-pro/)
 

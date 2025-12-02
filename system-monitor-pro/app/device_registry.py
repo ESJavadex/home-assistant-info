@@ -60,7 +60,7 @@ class DeviceRegistry:
                 "name": f"System Monitor ({self.config.hostname})",
                 "model": hardware_model,
                 "manufacturer": "System Monitor Pro",
-                "sw_version": "0.0.1",
+                "sw_version": "0.0.2",
                 "hw_version": os_version,
                 "configuration_url": f"homeassistant://hassio/addon/{self.config.mqtt_topic_prefix}/info"
             }
