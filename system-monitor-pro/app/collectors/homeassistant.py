@@ -68,7 +68,17 @@ class HomeAssistantCollector(BaseCollector):
         """Get list of installed add-ons."""
         data = await self._api_call("/addons")
         if data and "addons" in data:
-            return data["addons"]
+            addons = data["addons"]
+            # Log first addon structure for debugging
+            if addons:
+                logger.info(f"Found {len(addons)} total add-ons")
+                # Count installed
+                installed = [a for a in addons if a.get("installed")]
+                logger.info(f"Installed add-ons: {len(installed)}")
+                if installed:
+                    logger.debug(f"First installed addon: {installed[0]}")
+            return addons
+        logger.warning("No addons data returned from API")
         return []
 
     async def _get_core_info(self) -> Optional[Dict[str, Any]]:
@@ -129,33 +139,33 @@ class HomeAssistantCollector(BaseCollector):
         # Get add-ons info
         addons = await self._get_addons()
 
+        # Filter to only installed add-ons
+        installed_addons = [a for a in addons if a.get("installed")]
+
         # Log add-on states for debugging
-        if addons:
-            states = set(a.get("state", "unknown") for a in addons)
-            logger.debug(f"Found {len(addons)} add-ons with states: {states}")
+        if installed_addons:
+            states = set(a.get("state", "unknown") for a in installed_addons)
+            logger.debug(f"Installed add-ons states: {states}")
 
         # Filter running add-ons (check multiple possible state values)
-        running_addons = [a for a in addons if a.get("state") in ("started", "running", True)]
-
-        # If no running found, show all installed add-ons
-        display_addons = running_addons if running_addons else addons
+        running_addons = [a for a in installed_addons if a.get("state") in ("started", "running")]
 
         metrics.append(MetricValue(
             sensor_id="ha_addons_running",
             state_topic=self._make_state_topic("ha_addons_running"),
-            value=len(running_addons) if running_addons else len(addons),
+            value=len(running_addons),
             attributes={
                 "addons": [
                     {
                         "name": a.get("name", "Unknown"),
                         "slug": a.get("slug", ""),
                         "version": a.get("version", ""),
-                        "state": a.get("state", "unknown"),
-                        "installed": a.get("installed", False)
+                        "state": a.get("state", "unknown")
                     }
-                    for a in display_addons if a.get("installed", False)
+                    for a in installed_addons
                 ],
-                "total_installed": sum(1 for a in addons if a.get("installed", False))
+                "total_installed": len(installed_addons),
+                "running": len(running_addons)
             },
             attributes_topic=self._make_attributes_topic("ha_addons_running")
         ))

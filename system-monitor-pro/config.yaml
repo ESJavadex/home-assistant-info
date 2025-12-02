@@ -1,7 +1,7 @@
 # System Monitor Pro - Home Assistant Add-on Configuration
 name: "System Monitor Pro"
 description: "Comprehensive system monitoring with MQTT sensors for CPU, memory, disk, network, and security metrics. Supports Raspberry Pi and x86/ARM64 hardware."
-version: "0.2.2"
+version: "0.2.3"
 slug: "system_monitor_pro"
 url: "https://github.com/ESJavadex/home-assistant-info"
 
