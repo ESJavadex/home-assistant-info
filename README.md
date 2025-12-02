@@ -1,9 +1,9 @@
-# Javier Santos Home Assistant Add-ons
+# Home Assistant Info Add-ons
 
 [![Home Assistant Add-ons](https://img.shields.io/badge/Home%20Assistant-Add--ons-blue.svg?style=flat-square)](https://www.home-assistant.io/addons/)
 [![License](https://img.shields.io/github/license/ESJavadex/home-assistant-info?style=flat-square)](LICENSE)
 
-Custom Home Assistant add-ons repository by Javier Santos.
+Custom Home Assistant add-ons for system monitoring and information.
 
 ## Installation
 
