@@ -123,6 +123,102 @@
         .icon-system { background: linear-gradient(135deg, #fa709a, #fee140); }
         .icon-security { background: linear-gradient(135deg, #8b5cf6, #a855f7); }
         .icon-rpi { background: linear-gradient(135deg, #c51a4a, #ff6b9d); }
+        .icon-ha { background: linear-gradient(135deg, #18bcf2, #44d1ff); }
+
+        .ports-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .port-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.85rem;
+        }
+
+        .port-item:last-child {
+            border-bottom: none;
+        }
+
+        .port-number {
+            font-weight: 600;
+            color: var(--accent);
+            min-width: 60px;
+        }
+
+        .port-service {
+            flex: 1;
+            margin-left: 10px;
+            color: var(--text-secondary);
+        }
+
+        .port-proto {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+
+        .conn-states {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .conn-state-item {
+            background: var(--bg-primary);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .conn-state-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .conn-state-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .addons-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .addon-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .addon-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .addon-name {
+            font-weight: 500;
+        }
+
+        .addon-version {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
 
         .status-badge {
             display: inline-block;
@@ -495,29 +591,57 @@
                     <span>Connections</span>
                 </div>
             </div>
-            <div class="metric-value">
-                <span id="active-connections">--</span>
-            </div>
-            <div class="metric-label">Active Connections</div>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-value" id="open-ports">--</div>
-                    <div class="stat-label">Open Ports</div>
+                    <div class="stat-value" id="active-connections">--</div>
+                    <div class="stat-label">Established</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value" id="total-connections">--</div>
-                    <div class="stat-label">Total Connections</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="listening-sockets">--</div>
-                    <div class="stat-label">Listening</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="conn-time-wait">--</div>
-                    <div class="stat-label">TIME_WAIT</div>
+                    <div class="stat-label">Total</div>
                 </div>
             </div>
-            <div class="system-info" id="ports-info"></div>
+            <div class="conn-states" id="conn-states"></div>
+            <div class="metric-label" style="margin-top: 15px;">Listening Ports (<span id="open-ports">0</span>)</div>
+            <div class="ports-list" id="ports-list">
+                <div class="port-item">
+                    <span class="port-service">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Assistant Card -->
+        <div class="card" id="ha-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <div class="card-icon icon-ha">&#x1F3E0;</div>
+                    <span>Home Assistant</span>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="ha-addons">--</div>
+                    <div class="stat-label">Add-ons</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="ha-entities">--</div>
+                    <div class="stat-label">Entities</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="ha-automations">--</div>
+                    <div class="stat-label">Automations</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="ha-scripts">--</div>
+                    <div class="stat-label">Scripts</div>
+                </div>
+            </div>
+            <div class="metric-label" style="margin-top: 15px;">Running Add-ons</div>
+            <div class="addons-list" id="addons-list">
+                <div class="addon-item">
+                    <span class="addon-name">Loading...</span>
+                </div>
+            </div>
         </div>
 
         <!-- Raspberry Pi Card (hidden by default) -->
@@ -723,28 +847,65 @@
             // Security / Connections
             if (data.active_connections) {
                 document.getElementById('active-connections').textContent = data.active_connections.value;
-                // Show connection states
+                // Show all connection states
                 if (data.active_connections.attributes) {
                     const attrs = data.active_connections.attributes;
-                    if (attrs.TIME_WAIT !== undefined) {
-                        document.getElementById('conn-time-wait').textContent = attrs.TIME_WAIT;
+                    const stateOrder = ['LISTEN', 'ESTABLISHED', 'TIME_WAIT', 'CLOSE_WAIT', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_SENT', 'SYN_RECV', 'LAST_ACK', 'CLOSING'];
+                    let statesHtml = '';
+                    for (const state of stateOrder) {
+                        if (attrs[state] !== undefined && attrs[state] > 0) {
+                            statesHtml += '<div class="conn-state-item"><div class="conn-state-value">' +
+                                attrs[state] + '</div><div class="conn-state-label">' + state.replace('_', ' ') + '</div></div>';
+                        }
                     }
+                    document.getElementById('conn-states').innerHTML = statesHtml;
                 }
             }
             if (data.open_ports) {
                 document.getElementById('open-ports').textContent = data.open_ports.value;
-                // Show top ports
+                // Show ALL ports in scrollable list
                 if (data.open_ports.attributes && data.open_ports.attributes.ports) {
-                    const ports = data.open_ports.attributes.ports.slice(0, 5);
+                    const ports = data.open_ports.attributes.ports;
                     let portsHtml = '';
                     for (const p of ports) {
-                        portsHtml += '<div class="info-row"><span class="info-label">:' + p.port + '</span><span class="info-value">' + p.service + '</span></div>';
+                        portsHtml += '<div class="port-item">' +
+                            '<span class="port-number">:' + p.port + '</span>' +
+                            '<span class="port-service">' + p.service + '</span>' +
+                            '<span class="port-proto">' + p.protocol + '</span>' +
+                            '</div>';
                     }
-                    document.getElementById('ports-info').innerHTML = portsHtml;
+                    document.getElementById('ports-list').innerHTML = portsHtml || '<div class="port-item"><span class="port-service">No listening ports</span></div>';
                 }
             }
             if (data.total_connections) document.getElementById('total-connections').textContent = data.total_connections.value;
-            if (data.listening_sockets) document.getElementById('listening-sockets').textContent = data.listening_sockets.value;
+
+            // Home Assistant
+            if (data.ha_addons_running !== undefined) {
+                document.getElementById('ha-addons').textContent = data.ha_addons_running.value;
+            }
+            if (data.ha_entities !== undefined) {
+                document.getElementById('ha-entities').textContent = data.ha_entities.value;
+            }
+            if (data.ha_automations !== undefined) {
+                document.getElementById('ha-automations').textContent = data.ha_automations.value;
+            }
+            if (data.ha_scripts !== undefined) {
+                document.getElementById('ha-scripts').textContent = data.ha_scripts.value;
+            }
+            // Show running addons list
+            if (data.ha_addons_running && data.ha_addons_running.attributes && data.ha_addons_running.attributes.addons) {
+                const addons = data.ha_addons_running.attributes.addons;
+                let addonsHtml = '';
+                for (const addon of addons) {
+                    const statusClass = addon.state === 'started' ? 'status-ok' : 'status-warning';
+                    addonsHtml += '<div class="addon-item">' +
+                        '<div><span class="addon-name">' + addon.name + '</span>' +
+                        '<div class="addon-version">v' + addon.version + '</div></div>' +
+                        '<span class="status-badge ' + statusClass + '">' + addon.state + '</span>' +
+                        '</div>';
+                }
+                document.getElementById('addons-list').innerHTML = addonsHtml || '<div class="addon-item"><span class="addon-name">No add-ons</span></div>';
+            }
 
             // Raspberry Pi
             if (data.rpi_gpu_temperature || data.rpi_core_voltage) {

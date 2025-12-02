@@ -15,6 +15,7 @@ from .network import NetworkCollector
 from .security import SecurityCollector
 from .system import SystemCollector
 from .rpi import RPiCollector
+from .homeassistant import HomeAssistantCollector
 
 if TYPE_CHECKING:
     from config import Config
@@ -59,6 +60,9 @@ class CollectorRegistry:
         # Raspberry Pi collector (optional)
         if self.config.enable_rpi_monitoring:
             collector_classes.append(RPiCollector)
+
+        # Home Assistant collector (always try to load)
+        collector_classes.append(HomeAssistantCollector)
 
         # Instantiate collectors
         for collector_class in collector_classes:
