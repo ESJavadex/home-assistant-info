@@ -1,7 +1,7 @@
 # System Monitor Pro - Home Assistant Add-on Configuration
 name: "System Monitor Pro"
 description: "Comprehensive system monitoring with MQTT sensors for CPU, memory, disk, network, and security metrics. Supports Raspberry Pi and x86/ARM64 hardware."
-version: "0.0.3"
+version: "0.1.0"
 slug: "system_monitor_pro"
 url: "https://github.com/ESJavadex/home-assistant-info"
 
@@ -14,6 +14,11 @@ arch:
 init: false
 startup: services
 boot: auto
+
+# Web dashboard via ingress
+ingress: true
+ingress_port: 8099
+ingress_stream: false
 
 # Home Assistant integration
 homeassistant_api: true

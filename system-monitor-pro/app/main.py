@@ -20,6 +20,7 @@ from mqtt_publisher import MQTTPublisher
 from device_registry import DeviceRegistry
 from alert_manager import AlertManager
 from collectors import CollectorRegistry
+from webserver import WebServer
 
 # Configure logging
 logging.basicConfig(
@@ -40,13 +41,14 @@ class SystemMonitorPro:
         self.device: Optional[DeviceRegistry] = None
         self.alerts: Optional[AlertManager] = None
         self.collectors: Optional[CollectorRegistry] = None
+        self.webserver: Optional[WebServer] = None
         self.running = False
         self._shutdown_event = asyncio.Event()
 
     async def initialize(self):
         """Initialize all components."""
         logger.info("=" * 50)
-        logger.info("System Monitor Pro v0.0.3")
+        logger.info("System Monitor Pro v0.1.0")
         logger.info("=" * 50)
 
         # Load configuration
@@ -66,6 +68,9 @@ class SystemMonitorPro:
         logger.info("Initializing collectors...")
         self.collectors = CollectorRegistry(self.config)
 
+        logger.info("Initializing web dashboard...")
+        self.webserver = WebServer(self.collectors)
+
     async def start(self):
         """Start the monitoring service."""
         await self.initialize()
@@ -81,6 +86,9 @@ class SystemMonitorPro:
         await self.mqtt.publish_discovery(device_config, sensor_configs)
 
         logger.info(f"Registered {len(sensor_configs)} sensors")
+
+        # Start web dashboard
+        await self.webserver.start()
 
         # Start main monitoring loop
         self.running = True
@@ -124,6 +132,9 @@ class SystemMonitorPro:
         logger.info("Shutting down System Monitor Pro...")
         self.running = False
         self._shutdown_event.set()
+
+        if self.webserver:
+            await self.webserver.stop()
 
         if self.mqtt:
             await self.mqtt.disconnect()
