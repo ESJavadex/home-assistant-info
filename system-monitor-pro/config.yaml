@@ -1,0 +1,75 @@
+# System Monitor Pro - Home Assistant Add-on Configuration
+name: "System Monitor Pro"
+description: "Comprehensive system monitoring with MQTT sensors for CPU, memory, disk, network, and security metrics. Supports Raspberry Pi and x86/ARM64 hardware."
+version: "0.0.1"
+slug: "system_monitor_pro"
+url: "https://github.com/ESJavadex/home-assistant-info"
+
+# Supported architectures
+arch:
+  - amd64
+  - aarch64
+
+# Startup configuration
+init: false
+startup: services
+boot: auto
+
+# Home Assistant integration
+homeassistant_api: true
+hassio_api: true
+
+# Network and process access (required for accurate monitoring)
+host_network: true
+host_pid: true
+
+# Hardware access for Raspberry Pi detection
+devices:
+  - /dev/vcio
+
+# MQTT broker discovery
+discovery:
+  - mqtt
+
+services:
+  - mqtt:need
+
+# User-configurable options with defaults
+options:
+  update_interval: 60
+  cpu_threshold: 90
+  memory_threshold: 85
+  disk_threshold: 85
+  temp_threshold: 80
+  enable_security_monitoring: true
+  monitored_disks: []
+  enable_rpi_monitoring: true
+  mqtt_topic_prefix: "system_monitor_pro"
+  enable_alerts: true
+  alert_cooldown: 300
+
+# Schema for option validation
+schema:
+  update_interval: "int(10,3600)"
+  cpu_threshold: "int(50,100)"
+  memory_threshold: "int(50,100)"
+  disk_threshold: "int(50,100)"
+  temp_threshold: "int(50,100)"
+  enable_security_monitoring: bool
+  monitored_disks:
+    - "str?"
+  enable_rpi_monitoring: bool
+  mqtt_topic_prefix: str
+  enable_alerts: bool
+  alert_cooldown: "int(60,3600)"
+
+# Resource limits (Raspberry Pi friendly)
+environment:
+  PYTHONUNBUFFERED: "1"
+
+# Stage for add-on store visibility
+stage: stable
+
+# Panel configuration
+panel_icon: mdi:chart-line
+panel_title: "System Monitor Pro"

@@ -1,0 +1,34 @@
+configuration:
+  update_interval:
+    name: Update Interval
+    description: How often to collect and publish metrics (in seconds)
+  cpu_threshold:
+    name: CPU Alert Threshold
+    description: CPU usage percentage that triggers an alert
+  memory_threshold:
+    name: Memory Alert Threshold
+    description: Memory usage percentage that triggers an alert
+  disk_threshold:
+    name: Disk Alert Threshold
+    description: Disk usage percentage that triggers an alert
+  temp_threshold:
+    name: Temperature Alert Threshold
+    description: Temperature (Celsius) that triggers an alert
+  enable_security_monitoring:
+    name: Enable Security Monitoring
+    description: Monitor open ports and network connections
+  monitored_disks:
+    name: Monitored Disks
+    description: List of disk mount points to monitor (leave empty for all disks)
+  enable_rpi_monitoring:
+    name: Enable Raspberry Pi Monitoring
+    description: Enable Raspberry Pi specific sensors (throttling, voltage)
+  mqtt_topic_prefix:
+    name: MQTT Topic Prefix
+    description: Prefix for all MQTT topics used by this add-on
+  enable_alerts:
+    name: Enable Alerts
+    description: Send alert events when thresholds are exceeded
+  alert_cooldown:
+    name: Alert Cooldown
+    description: Minimum seconds between repeated alerts for the same sensor
