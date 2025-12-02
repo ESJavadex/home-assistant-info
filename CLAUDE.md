@@ -46,14 +46,22 @@ The add-on uses MQTT Discovery to automatically create sensors in Home Assistant
 
 ## Version Management
 
-**Important:** Bump version in ALL these files when making changes:
-- `system-monitor-pro/config.yaml` (version field)
-- `system-monitor-pro/build.yaml` (BUILD_VERSION arg)
-- `system-monitor-pro/app/__init__.py` (__version__)
-- `system-monitor-pro/app/main.py` (log message)
-- `system-monitor-pro/app/device_registry.py` (sw_version)
-- `system-monitor-pro/CHANGELOG.md` (add new entry)
-- `README.md` (version badge)
+**CRITICAL: Bump version with EVERY commit that changes code!**
+
+When making any changes to the add-on, you MUST update the version in ALL 7 files:
+
+1. `system-monitor-pro/config.yaml` → `version: "X.Y.Z"`
+2. `system-monitor-pro/build.yaml` → `BUILD_VERSION: "X.Y.Z"`
+3. `system-monitor-pro/app/__init__.py` → `__version__ = "X.Y.Z"`
+4. `system-monitor-pro/app/main.py` → `logger.info("System Monitor Pro vX.Y.Z")`
+5. `system-monitor-pro/app/device_registry.py` → `"sw_version": "X.Y.Z"`
+6. `system-monitor-pro/CHANGELOG.md` → Add new `## [X.Y.Z]` section at top
+7. `README.md` → Update version badge `version-X.Y.Z-blue`
+
+**Version format:** Use semantic versioning (MAJOR.MINOR.PATCH)
+- PATCH: Bug fixes, small changes
+- MINOR: New features, non-breaking
+- MAJOR: Breaking changes
 
 ## Development Commands
 

@@ -46,7 +46,7 @@ class SystemMonitorPro:
     async def initialize(self):
         """Initialize all components."""
         logger.info("=" * 50)
-        logger.info("System Monitor Pro v0.0.2")
+        logger.info("System Monitor Pro v0.0.3")
         logger.info("=" * 50)
 
         # Load configuration
