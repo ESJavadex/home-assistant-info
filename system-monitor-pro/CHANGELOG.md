@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2025-12-02
+
+### Added
+
+- Web dashboard: Network card showing IP address, bytes sent/received, packets, errors, drops
+- Web dashboard: Connections card showing active connections, open ports, listening sockets
+- Web dashboard: Raspberry Pi card (auto-shown if RPi detected) with GPU temp, voltage, throttle status
+- Network interfaces list in dashboard
+- Top listening ports list in dashboard
+
 ## [0.0.3] - 2024-12-02
 
 ### Added

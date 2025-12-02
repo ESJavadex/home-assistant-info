@@ -28,9 +28,13 @@ class WebServer:
 
     def _setup_routes(self):
         """Configure routes for the web application."""
+        # Main routes
         self.app.router.add_get("/", self._handle_index)
         self.app.router.add_get("/api/metrics", self._handle_metrics)
         self.app.router.add_get("/api/health", self._handle_health)
+        # Handle trailing slashes for ingress compatibility
+        self.app.router.add_get("/api/metrics/", self._handle_metrics)
+        self.app.router.add_get("/api/health/", self._handle_health)
 
     async def _handle_index(self, request: web.Request) -> web.Response:
         """Serve the main dashboard HTML."""
@@ -196,6 +200,23 @@ class WebServer:
         .icon-disk {{ background: linear-gradient(135deg, #4facfe, #00f2fe); }}
         .icon-network {{ background: linear-gradient(135deg, #43e97b, #38f9d7); }}
         .icon-system {{ background: linear-gradient(135deg, #fa709a, #fee140); }}
+        .icon-security {{ background: linear-gradient(135deg, #8b5cf6, #a855f7); }}
+        .icon-rpi {{ background: linear-gradient(135deg, #c51a4a, #ff6b9d); }}
+
+        .status-badge {{
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }}
+
+        .status-ok {{ background: rgba(16, 185, 129, 0.2); color: #10b981; }}
+        .status-warning {{ background: rgba(245, 158, 11, 0.2); color: #f59e0b; }}
+        .status-danger {{ background: rgba(239, 68, 68, 0.2); color: #ef4444; }}
+
+        .hidden {{ display: none !important; }}
 
         .metric-value {{
             font-size: 2.5rem;
@@ -501,6 +522,120 @@ class WebServer:
             </div>
             <div class="system-info" id="system-info"></div>
         </div>
+
+        <!-- Network Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <div class="card-icon icon-network">&#x1F310;</div>
+                    <span>Network</span>
+                </div>
+            </div>
+            <div class="metric-value">
+                <span id="network-ip">--</span>
+            </div>
+            <div class="metric-label">IP Address</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="net-sent">--</div>
+                    <div class="stat-label">Sent (GB)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="net-recv">--</div>
+                    <div class="stat-label">Received (GB)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="net-packets-sent">--</div>
+                    <div class="stat-label">Packets Sent</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="net-packets-recv">--</div>
+                    <div class="stat-label">Packets Recv</div>
+                </div>
+            </div>
+            <div class="stats-grid" style="margin-top: 10px;">
+                <div class="stat-item">
+                    <div class="stat-value" id="net-errors">--</div>
+                    <div class="stat-label">Errors</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="net-drops">--</div>
+                    <div class="stat-label">Drops</div>
+                </div>
+            </div>
+            <div class="system-info" id="interfaces-info"></div>
+        </div>
+
+        <!-- Security Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <div class="card-icon icon-security">&#x1F512;</div>
+                    <span>Connections</span>
+                </div>
+            </div>
+            <div class="metric-value">
+                <span id="active-connections">--</span>
+            </div>
+            <div class="metric-label">Active Connections</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="open-ports">--</div>
+                    <div class="stat-label">Open Ports</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="total-connections">--</div>
+                    <div class="stat-label">Total Connections</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="listening-sockets">--</div>
+                    <div class="stat-label">Listening</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="conn-time-wait">--</div>
+                    <div class="stat-label">TIME_WAIT</div>
+                </div>
+            </div>
+            <div class="system-info" id="ports-info"></div>
+        </div>
+
+        <!-- Raspberry Pi Card (hidden by default) -->
+        <div class="card hidden" id="rpi-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <div class="card-icon icon-rpi">&#x1F353;</div>
+                    <span>Raspberry Pi</span>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="rpi-gpu-temp">--</div>
+                    <div class="stat-label">GPU Temp</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="rpi-voltage">--</div>
+                    <div class="stat-label">Core Voltage</div>
+                </div>
+            </div>
+            <div class="stats-grid" style="margin-top: 10px;">
+                <div class="stat-item">
+                    <span id="rpi-throttle-badge" class="status-badge status-ok">OK</span>
+                    <div class="stat-label" style="margin-top: 5px;">Throttle</div>
+                </div>
+                <div class="stat-item">
+                    <span id="rpi-voltage-badge" class="status-badge status-ok">OK</span>
+                    <div class="stat-label" style="margin-top: 5px;">Voltage</div>
+                </div>
+                <div class="stat-item">
+                    <span id="rpi-temp-badge" class="status-badge status-ok">OK</span>
+                    <div class="stat-label" style="margin-top: 5px;">Temp Limit</div>
+                </div>
+                <div class="stat-item">
+                    <span id="rpi-freq-badge" class="status-badge status-ok">OK</span>
+                    <div class="stat-label" style="margin-top: 5px;">Freq Cap</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="refresh-info">
@@ -532,6 +667,13 @@ class WebServer:
             if (minutes > 0) parts.push(minutes + 'm');
 
             return parts.join(' ') || '< 1m';
+        }}
+
+        function formatNumber(num) {{
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
         }}
 
         function updateDashboard(data) {{
@@ -633,6 +775,92 @@ class WebServer:
                 if (info.architecture) infoHtml += '<div class="info-row"><span class="info-label">Arch</span><span class="info-value">' + info.architecture + '</span></div>';
                 if (info.hostname) infoHtml += '<div class="info-row"><span class="info-label">Host</span><span class="info-value">' + info.hostname + '</span></div>';
                 document.getElementById('system-info').innerHTML = infoHtml;
+            }}
+
+            // Network
+            if (data.network_ip_address) {{
+                document.getElementById('network-ip').textContent = data.network_ip_address.value;
+                // Show interfaces
+                if (data.network_ip_address.attributes && data.network_ip_address.attributes.interfaces) {{
+                    const ifaces = data.network_ip_address.attributes.interfaces;
+                    let ifaceHtml = '';
+                    for (const [name, info] of Object.entries(ifaces)) {{
+                        if (info.ipv4) {{
+                            ifaceHtml += '<div class="info-row"><span class="info-label">' + name + '</span><span class="info-value">' + info.ipv4 + '</span></div>';
+                        }}
+                    }}
+                    document.getElementById('interfaces-info').innerHTML = ifaceHtml;
+                }}
+            }}
+            if (data.network_bytes_sent) document.getElementById('net-sent').textContent = data.network_bytes_sent.value;
+            if (data.network_bytes_recv) document.getElementById('net-recv').textContent = data.network_bytes_recv.value;
+            if (data.network_packets_sent) document.getElementById('net-packets-sent').textContent = formatNumber(data.network_packets_sent.value);
+            if (data.network_packets_recv) document.getElementById('net-packets-recv').textContent = formatNumber(data.network_packets_recv.value);
+            if (data.network_errors) document.getElementById('net-errors').textContent = data.network_errors.value;
+            if (data.network_drops) document.getElementById('net-drops').textContent = data.network_drops.value;
+
+            // Security / Connections
+            if (data.active_connections) {{
+                document.getElementById('active-connections').textContent = data.active_connections.value;
+                // Show connection states
+                if (data.active_connections.attributes) {{
+                    const attrs = data.active_connections.attributes;
+                    if (attrs.TIME_WAIT !== undefined) {{
+                        document.getElementById('conn-time-wait').textContent = attrs.TIME_WAIT;
+                    }}
+                }}
+            }}
+            if (data.open_ports) {{
+                document.getElementById('open-ports').textContent = data.open_ports.value;
+                // Show top ports
+                if (data.open_ports.attributes && data.open_ports.attributes.ports) {{
+                    const ports = data.open_ports.attributes.ports.slice(0, 5);
+                    let portsHtml = '';
+                    for (const p of ports) {{
+                        portsHtml += '<div class="info-row"><span class="info-label">:' + p.port + '</span><span class="info-value">' + p.service + '</span></div>';
+                    }}
+                    document.getElementById('ports-info').innerHTML = portsHtml;
+                }}
+            }}
+            if (data.total_connections) document.getElementById('total-connections').textContent = data.total_connections.value;
+            if (data.listening_sockets) document.getElementById('listening-sockets').textContent = data.listening_sockets.value;
+
+            // Raspberry Pi
+            if (data.rpi_gpu_temperature || data.rpi_core_voltage) {{
+                document.getElementById('rpi-card').classList.remove('hidden');
+
+                if (data.rpi_gpu_temperature) {{
+                    document.getElementById('rpi-gpu-temp').textContent = data.rpi_gpu_temperature.value + '°C';
+                }}
+                if (data.rpi_core_voltage) {{
+                    document.getElementById('rpi-voltage').textContent = data.rpi_core_voltage.value + 'V';
+                }}
+
+                // Status badges
+                if (data.rpi_throttled) {{
+                    const badge = document.getElementById('rpi-throttle-badge');
+                    const isOn = data.rpi_throttled.value === 'on';
+                    badge.textContent = isOn ? 'THROTTLED' : 'OK';
+                    badge.className = 'status-badge ' + (isOn ? 'status-danger' : 'status-ok');
+                }}
+                if (data.rpi_under_voltage) {{
+                    const badge = document.getElementById('rpi-voltage-badge');
+                    const isOn = data.rpi_under_voltage.value === 'on';
+                    badge.textContent = isOn ? 'LOW' : 'OK';
+                    badge.className = 'status-badge ' + (isOn ? 'status-danger' : 'status-ok');
+                }}
+                if (data.rpi_temp_limited) {{
+                    const badge = document.getElementById('rpi-temp-badge');
+                    const isOn = data.rpi_temp_limited.value === 'on';
+                    badge.textContent = isOn ? 'LIMITED' : 'OK';
+                    badge.className = 'status-badge ' + (isOn ? 'status-warning' : 'status-ok');
+                }}
+                if (data.rpi_freq_capped) {{
+                    const badge = document.getElementById('rpi-freq-badge');
+                    const isOn = data.rpi_freq_capped.value === 'on';
+                    badge.textContent = isOn ? 'CAPPED' : 'OK';
+                    badge.className = 'status-badge ' + (isOn ? 'status-warning' : 'status-ok');
+                }}
             }}
 
             // Update timestamp

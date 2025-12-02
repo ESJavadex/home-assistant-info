@@ -6,4 +6,4 @@ build_from:
 squash: false
 
 args:
-  BUILD_VERSION: "0.0.3"
+  BUILD_VERSION: "0.1.3"
