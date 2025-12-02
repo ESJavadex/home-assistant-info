@@ -24,16 +24,36 @@ logger = logging.getLogger(__name__)
 SUPERVISOR_URL = "http://supervisor"
 SUPERVISOR_TOKEN = os.environ.get("SUPERVISOR_TOKEN", "")
 
-# Well-known system ports as fallback
+# Well-known system ports with descriptions
 SYSTEM_PORTS = {
-    22: "SSH",
-    53: "DNS",
-    80: "HTTP",
-    111: "RPC",
-    443: "HTTPS",
-    5353: "mDNS",
-    5355: "LLMNR",
-    8123: "Home Assistant",
+    22: ("SSH", "Secure Shell"),
+    53: ("DNS", "Domain Name System"),
+    80: ("HTTP", "Web Server"),
+    111: ("RPC", "Remote Procedure Call"),
+    443: ("HTTPS", "Secure Web Server"),
+    1883: ("MQTT", "Message Broker"),
+    1884: ("MQTT-WS", "MQTT over WebSocket"),
+    5353: ("mDNS", "Multicast DNS"),
+    5355: ("LLMNR", "Link-Local Multicast"),
+    8123: ("Home Assistant", "HA Web Interface"),
+    8883: ("MQTT-TLS", "Secure MQTT"),
+    8884: ("MQTT-TLS-WS", "Secure MQTT WebSocket"),
+}
+
+# Common container port descriptions
+CONTAINER_PORT_DESC = {
+    "80/tcp": "Web Interface",
+    "443/tcp": "Secure Web",
+    "1883/tcp": "MQTT Broker",
+    "1884/tcp": "MQTT WebSocket",
+    "8080/tcp": "Web Interface",
+    "8099/tcp": "Dashboard",
+    "8123/tcp": "HA Interface",
+    "8554/tcp": "RTSP Stream",
+    "8555/tcp": "WebRTC",
+    "9001/tcp": "API",
+    "5000/tcp": "API Server",
+    "3000/tcp": "Web App",
 }
 
 
@@ -55,9 +75,13 @@ class SecurityCollector(BaseCollector):
             self._session = aiohttp.ClientSession()
         return self._session
 
-    async def _build_port_map(self) -> Dict[int, str]:
-        """Build a mapping of ports to service names from Supervisor API."""
-        port_map = dict(SYSTEM_PORTS)  # Start with system ports
+    async def _build_port_map(self) -> Dict[int, Dict[str, str]]:
+        """Build a mapping of ports to service info from Supervisor API."""
+        # Start with system ports: {port: {"name": name, "desc": description}}
+        port_map = {
+            port: {"name": info[0], "desc": info[1]}
+            for port, info in SYSTEM_PORTS.items()
+        }
 
         if not SUPERVISOR_TOKEN:
             return port_map
@@ -80,9 +104,9 @@ class SecurityCollector(BaseCollector):
                             continue
 
                         name = addon.get("name", addon.get("slug", "unknown"))
+                        slug = addon.get("slug", "")
 
                         # Get detailed addon info for port mappings
-                        slug = addon.get("slug")
                         if slug:
                             try:
                                 async with session.get(
@@ -94,17 +118,28 @@ class SecurityCollector(BaseCollector):
                                         addon_data = await addon_resp.json()
                                         addon_info = addon_data.get("data", {})
 
-                                        # Get network ports
+                                        # Get network ports with descriptions
                                         network = addon_info.get("network", {})
                                         if network:
                                             for container_port, host_port in network.items():
                                                 if host_port:
-                                                    port_map[int(host_port)] = name
+                                                    # Get description from container port
+                                                    desc = CONTAINER_PORT_DESC.get(
+                                                        container_port,
+                                                        container_port.replace("/tcp", "").replace("/udp", "")
+                                                    )
+                                                    port_map[int(host_port)] = {
+                                                        "name": name,
+                                                        "desc": desc
+                                                    }
 
                                         # Get ingress port
                                         ingress_port = addon_info.get("ingress_port")
                                         if ingress_port:
-                                            port_map[int(ingress_port)] = f"{name}"
+                                            port_map[int(ingress_port)] = {
+                                                "name": name,
+                                                "desc": "Ingress (Web UI)"
+                                            }
 
                                         # Get webui port from webui URL
                                         webui = addon_info.get("webui")
@@ -112,7 +147,12 @@ class SecurityCollector(BaseCollector):
                                             try:
                                                 port_str = webui.split(":")[-1].split("/")[0].replace("[", "").replace("]", "")
                                                 if port_str.isdigit():
-                                                    port_map[int(port_str)] = name
+                                                    port_num = int(port_str)
+                                                    if port_num not in port_map:
+                                                        port_map[port_num] = {
+                                                            "name": name,
+                                                            "desc": "Web UI"
+                                                        }
                                             except:
                                                 pass
 
@@ -126,7 +166,7 @@ class SecurityCollector(BaseCollector):
 
         return port_map
 
-    def _get_listening_ports(self, port_map: Dict[int, str]) -> List[Dict[str, Any]]:
+    def _get_listening_ports(self, port_map: Dict[int, Dict[str, str]]) -> List[Dict[str, Any]]:
         """Get list of listening ports with service info."""
         listening = []
         seen_ports = set()  # Deduplicate by port
@@ -157,19 +197,25 @@ class SecurityCollector(BaseCollector):
                         except (psutil.NoSuchProcess, psutil.AccessDenied):
                             pass
 
-                    # Use port map from Supervisor API
-                    if not process_name:
-                        process_name = port_map.get(port)
+                    # Get info from port map
+                    port_info = port_map.get(port, {})
+                    service_name = port_info.get("name") if port_info else None
+                    service_desc = port_info.get("desc", "") if port_info else ""
+
+                    # Use process name if we got it, otherwise use port map
+                    if process_name and not service_name:
+                        service_name = process_name
 
                     # Final fallback
-                    if not process_name:
-                        process_name = f"port-{port}"
+                    if not service_name:
+                        service_name = f"port-{port}"
 
                     listening.append({
                         "port": port,
                         "protocol": protocol,
                         "address": conn.laddr.ip,
-                        "service": process_name,
+                        "service": service_name,
+                        "description": service_desc,
                         "pid": conn.pid
                     })
 
